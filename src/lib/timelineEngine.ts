@@ -25,7 +25,12 @@ const COMMON: Base[] = [
   { id: "vendors-confirm", title: "Confirm all vendors and payments", daysBefore: 14 },
   { id: "headcount", title: "Final headcount to caterer", daysBefore: 7, priority: true },
   { id: "setup", title: "Venue setup and rehearsal", daysBefore: 1 },
-  { id: "dayof", title: "Day-of schedule: arrivals, program, meal, wrap-up", daysBefore: 0, priority: true },
+  {
+    id: "dayof",
+    title: "Day-of schedule: arrivals, program, meal, wrap-up",
+    daysBefore: 0,
+    priority: true,
+  },
 ];
 
 const EXTRA: Partial<Record<EventType, Base[]>> = {
@@ -42,7 +47,14 @@ const EXTRA: Partial<Record<EventType, Base[]>> = {
   ],
   wedding: [{ id: "attire", title: "Finalise attire and makeup trials", daysBefore: 40 }],
   birthday: [{ id: "cake", title: "Order the cake", daysBefore: 7 }],
-  community: [{ id: "permits", title: "Apply for permits and safety clearances", daysBefore: 70, priority: true }],
+  community: [
+    {
+      id: "permits",
+      title: "Apply for permits and safety clearances",
+      daysBefore: 70,
+      priority: true,
+    },
+  ],
 };
 
 const FULL_WINDOW = 90;
@@ -59,7 +71,11 @@ export function daysBetween(fromIso: string, toIsoStr: string): number {
   return Math.round((parseIso(toIsoStr).getTime() - parseIso(fromIso).getTime()) / 86_400_000);
 }
 
-export function generateTimeline(eventType: EventType, eventDate: string, today: string): TimelineResult {
+export function generateTimeline(
+  eventType: EventType,
+  eventDate: string,
+  today: string,
+): TimelineResult {
   const daysUntil = daysBetween(today, eventDate);
   const rush = daysUntil < FULL_WINDOW;
   const base = [...COMMON, ...(EXTRA[eventType] ?? [])];

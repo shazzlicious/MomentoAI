@@ -3,7 +3,15 @@ import { useMemo, useState } from "react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Field, describedBy, inputCls } from "@/components/Field";
-import { DIETS, EVENT_TYPES, STYLES, SUB_TYPES, VENUE_TYPES, type EventType, type Plan } from "@/types/plan";
+import {
+  DIETS,
+  EVENT_TYPES,
+  STYLES,
+  SUB_TYPES,
+  VENUE_TYPES,
+  type EventType,
+  type Plan,
+} from "@/types/plan";
 import { basicsSchema, prefsSchema, sanitizeNotes, todayIso } from "@/lib/validation";
 import { EVENT_LABELS, formatDate, formatINR, makeId } from "@/lib/format";
 import { defaultVendors } from "@/lib/vendorTemplates";
@@ -14,9 +22,15 @@ export const Route = createFileRoute("/plan/new")({
   head: () => ({
     meta: [
       { title: "Plan a new event — Momento" },
-      { name: "description", content: "Three quick steps: event basics, budget and style, then generate your plan." },
+      {
+        name: "description",
+        content: "Three quick steps: event basics, budget and style, then generate your plan.",
+      },
       { property: "og:title", content: "Plan a new event — Momento" },
-      { property: "og:description", content: "Create a budget, timeline and vendor checklist in minutes." },
+      {
+        property: "og:description",
+        content: "Create a budget, timeline and vendor checklist in minutes.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -58,7 +72,13 @@ function Wizard() {
     const input =
       s === 0
         ? { ...form, subType: subs.length ? form.subType : undefined }
-        : { budget: form.budget, style: form.style, diet: form.diet, venueType: form.venueType, notes: form.notes };
+        : {
+            budget: form.budget,
+            style: form.style,
+            diet: form.diet,
+            venueType: form.venueType,
+            notes: form.notes,
+          };
     const r = schema.safeParse(input);
     if (r.success) {
       setErrors({});
@@ -121,7 +141,9 @@ function Wizard() {
         {STEPS.map((s, i) => (
           <li key={s} aria-current={i === step ? "step" : undefined} className="text-xs sm:text-sm">
             <div className={`h-2 rounded-full ${i <= step ? "bg-brand" : "bg-muted"}`} />
-            <span className={`mt-2 block ${i === step ? "font-semibold text-foreground" : "text-muted-foreground"}`}>
+            <span
+              className={`mt-2 block ${i === step ? "font-semibold text-foreground" : "text-muted-foreground"}`}
+            >
               {i + 1}. {s}
             </span>
           </li>
@@ -145,7 +167,9 @@ function Wizard() {
               <select
                 {...common("eventType")}
                 value={form.eventType}
-                onChange={(e) => setForm((f) => ({ ...f, eventType: e.target.value as EventType, subType: "" }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, eventType: e.target.value as EventType, subType: "" }))
+                }
               >
                 {EVENT_TYPES.map((t) => (
                   <option key={t} value={t}>
@@ -156,7 +180,11 @@ function Wizard() {
             </Field>
             {subs.length > 0 ? (
               <Field id="f-subType" label="Sub-type" error={err("subType")}>
-                <select {...common("subType")} value={form.subType} onChange={(e) => set("subType", e.target.value)}>
+                <select
+                  {...common("subType")}
+                  value={form.subType}
+                  onChange={(e) => set("subType", e.target.value)}
+                >
                   <option value="">Choose…</option>
                   {subs.map((s) => (
                     <option key={s}>{s}</option>
@@ -168,50 +196,126 @@ function Wizard() {
             )}
             <div className="sm:col-span-2">
               <Field id="f-name" label="Event name" error={err("name")}>
-                <input {...common("name")} value={form.name} maxLength={80} onChange={(e) => set("name", e.target.value)} placeholder="Aanya turns 5" />
+                <input
+                  {...common("name")}
+                  value={form.name}
+                  maxLength={80}
+                  onChange={(e) => set("name", e.target.value)}
+                  placeholder="Aanya turns 5"
+                />
               </Field>
             </div>
             <Field id="f-date" label="Date" error={err("date")}>
-              <input {...common("date")} type="date" min={minDate} value={form.date} onChange={(e) => set("date", e.target.value)} />
+              <input
+                {...common("date")}
+                type="date"
+                min={minDate}
+                value={form.date}
+                onChange={(e) => set("date", e.target.value)}
+              />
             </Field>
             <Field id="f-city" label="City" error={err("city")}>
-              <input {...common("city")} value={form.city} onChange={(e) => set("city", e.target.value)} placeholder="Pune" />
+              <input
+                {...common("city")}
+                value={form.city}
+                onChange={(e) => set("city", e.target.value)}
+                placeholder="Pune"
+              />
             </Field>
-            <Field id="f-guests" label="Guest count" error={err("guests")} hint="Between 1 and 2000">
-              <input {...common("guests", "Between 1 and 2000")} type="number" inputMode="numeric" min={1} max={2000} value={form.guests} onChange={(e) => set("guests", e.target.value)} />
+            <Field
+              id="f-guests"
+              label="Guest count"
+              error={err("guests")}
+              hint="Between 1 and 2000"
+            >
+              <input
+                {...common("guests", "Between 1 and 2000")}
+                type="number"
+                inputMode="numeric"
+                min={1}
+                max={2000}
+                value={form.guests}
+                onChange={(e) => set("guests", e.target.value)}
+              />
             </Field>
           </div>
         )}
 
         {step === 1 && (
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field id="f-budget" label="Total budget (₹)" error={err("budget")} hint={Number(form.budget) ? formatINR(Number(form.budget)) : undefined}>
-              <input {...common("budget", "x")} type="number" inputMode="numeric" min={1000} value={form.budget} onChange={(e) => set("budget", e.target.value)} />
+            <Field
+              id="f-budget"
+              label="Total budget (₹)"
+              error={err("budget")}
+              hint={Number(form.budget) ? formatINR(Number(form.budget)) : undefined}
+            >
+              <input
+                {...common("budget", "x")}
+                type="number"
+                inputMode="numeric"
+                min={1000}
+                value={form.budget}
+                onChange={(e) => set("budget", e.target.value)}
+              />
             </Field>
             <Field id="f-style" label="Style / theme" error={err("style")}>
-              <select {...common("style")} value={form.style} onChange={(e) => set("style", e.target.value)}>
-                {STYLES.map((s) => <option key={s}>{s}</option>)}
+              <select
+                {...common("style")}
+                value={form.style}
+                onChange={(e) => set("style", e.target.value)}
+              >
+                {STYLES.map((s) => (
+                  <option key={s}>{s}</option>
+                ))}
               </select>
             </Field>
             <Field id="f-diet" label="Dietary needs" error={err("diet")}>
-              <select {...common("diet")} value={form.diet} onChange={(e) => set("diet", e.target.value)}>
-                {DIETS.map((s) => <option key={s}>{s}</option>)}
+              <select
+                {...common("diet")}
+                value={form.diet}
+                onChange={(e) => set("diet", e.target.value)}
+              >
+                {DIETS.map((s) => (
+                  <option key={s}>{s}</option>
+                ))}
               </select>
             </Field>
             <fieldset className="flex flex-col gap-1.5">
               <legend className="mb-1.5 text-sm font-medium">Setting</legend>
               <div className="flex gap-2">
                 {VENUE_TYPES.map((v) => (
-                  <label key={v} className={`flex min-h-11 flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border px-3 ${form.venueType === v ? "border-primary bg-muted font-semibold text-primary" : ""}`}>
-                    <input type="radio" name="venueType" value={v} checked={form.venueType === v} onChange={() => set("venueType", v)} className="size-4 accent-current" />
+                  <label
+                    key={v}
+                    className={`flex min-h-11 flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border px-3 ${form.venueType === v ? "border-primary bg-muted font-semibold text-primary" : ""}`}
+                  >
+                    <input
+                      type="radio"
+                      name="venueType"
+                      value={v}
+                      checked={form.venueType === v}
+                      onChange={() => set("venueType", v)}
+                      className="size-4 accent-current"
+                    />
                     {v}
                   </label>
                 ))}
               </div>
             </fieldset>
             <div className="sm:col-span-2">
-              <Field id="f-notes" label="Special notes (optional)" error={err("notes")} hint={`${form.notes.length}/300 characters`}>
-                <textarea {...common("notes", "x")} rows={3} maxLength={300} value={form.notes} onChange={(e) => set("notes", e.target.value)} placeholder="Grandparents attending, prefer early evening…" />
+              <Field
+                id="f-notes"
+                label="Special notes (optional)"
+                error={err("notes")}
+                hint={`${form.notes.length}/300 characters`}
+              >
+                <textarea
+                  {...common("notes", "x")}
+                  rows={3}
+                  maxLength={300}
+                  value={form.notes}
+                  onChange={(e) => set("notes", e.target.value)}
+                  placeholder="Grandparents attending, prefer early evening…"
+                />
               </Field>
             </div>
           </div>
@@ -220,7 +324,10 @@ function Wizard() {
         {step === 2 && (
           <dl className="grid gap-3 sm:grid-cols-2">
             {[
-              ["Event", `${EVENT_LABELS[form.eventType]}${form.subType ? ` · ${form.subType}` : ""}`],
+              [
+                "Event",
+                `${EVENT_LABELS[form.eventType]}${form.subType ? ` · ${form.subType}` : ""}`,
+              ],
               ["Name", form.name],
               ["Date", form.date ? formatDate(form.date) : "—"],
               ["City", form.city],
@@ -240,7 +347,13 @@ function Wizard() {
         )}
 
         <div className="mt-8 flex justify-between gap-3">
-          <Button type="button" variant="outline" className="min-h-11 rounded-full px-6" disabled={step === 0} onClick={() => setStep((s) => s - 1)}>
+          <Button
+            type="button"
+            variant="outline"
+            className="min-h-11 rounded-full px-6"
+            disabled={step === 0}
+            onClick={() => setStep((s) => s - 1)}
+          >
             Back
           </Button>
           <Button type="submit" className="min-h-11 rounded-full px-6">

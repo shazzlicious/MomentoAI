@@ -8,9 +8,16 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Momento — Every moment, perfectly planned." },
-      { name: "description", content: "Budgets, timelines, vendors and AI-powered ideas for weddings, birthdays, festivals, corporate and community events." },
+      {
+        name: "description",
+        content:
+          "Budgets, timelines, vendors and AI-powered ideas for weddings, birthdays, festivals, corporate and community events.",
+      },
       { property: "og:title", content: "Momento — Every moment, perfectly planned." },
-      { property: "og:description", content: "Plan weddings, birthdays, festivals, corporate and community events in minutes." },
+      {
+        property: "og:description",
+        content: "Plan weddings, birthdays, festivals, corporate and community events in minutes.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -19,11 +26,36 @@ export const Route = createFileRoute("/")({
 });
 
 const CARDS: { type: EventType; title: string; line: string; Icon: typeof Heart }[] = [
-  { type: "wedding", title: "Wedding", line: "Mehendi to vidaai, every ritual on schedule.", Icon: Heart },
-  { type: "birthday", title: "Birthday", line: "First birthdays to milestone 50s, made memorable.", Icon: Cake },
-  { type: "festival", title: "Festival", line: "Diwali, Eid, Christmas and beyond, celebrated beautifully.", Icon: Sparkle },
-  { type: "corporate", title: "Corporate / Internal", line: "From team offsites to annual days, planned in minutes.", Icon: Briefcase },
-  { type: "community", title: "Community", line: "Melas, drives and society events that bring people together.", Icon: Users },
+  {
+    type: "wedding",
+    title: "Wedding",
+    line: "Mehendi to vidaai, every ritual on schedule.",
+    Icon: Heart,
+  },
+  {
+    type: "birthday",
+    title: "Birthday",
+    line: "First birthdays to milestone 50s, made memorable.",
+    Icon: Cake,
+  },
+  {
+    type: "festival",
+    title: "Festival",
+    line: "Diwali, Eid, Christmas and beyond, celebrated beautifully.",
+    Icon: Sparkle,
+  },
+  {
+    type: "corporate",
+    title: "Corporate / Internal",
+    line: "From team offsites to annual days, planned in minutes.",
+    Icon: Briefcase,
+  },
+  {
+    type: "community",
+    title: "Community",
+    line: "Melas, drives and society events that bring people together.",
+    Icon: Users,
+  },
 ];
 
 function Landing() {
@@ -39,14 +71,23 @@ function Landing() {
               Every moment, <span className="text-brand">perfectly planned.</span>
             </h1>
             <p className="mt-5 max-w-xl text-lg text-muted-foreground">
-              Budgets, timelines, vendors and AI-powered ideas for weddings, birthdays, festivals, corporate and
-              community events.
+              Budgets, timelines, vendors and AI-powered ideas for weddings, birthdays, festivals,
+              corporate and community events.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Button asChild size="lg" className="min-h-12 rounded-full px-7 text-base shadow-soft">
+              <Button
+                asChild
+                size="lg"
+                className="min-h-12 rounded-full px-7 text-base shadow-soft"
+              >
                 <Link to="/plan/new">Start planning</Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="min-h-12 rounded-full px-7 text-base">
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="min-h-12 rounded-full px-7 text-base"
+              >
                 <Link to="/plans">My Plans</Link>
               </Button>
             </div>

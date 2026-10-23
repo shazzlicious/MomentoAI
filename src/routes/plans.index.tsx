@@ -42,13 +42,16 @@ function MyPlans() {
       ) : (
         <ul className="mt-8 grid gap-3">
           {plans.map((p) => (
-            <li key={p.id} className="flex items-center justify-between gap-3 rounded-2xl border bg-card p-4">
+            <li
+              key={p.id}
+              className="flex items-center justify-between gap-3 rounded-2xl border bg-card p-4"
+            >
               <Link to="/plans/$id" params={{ id: p.id }} className="min-w-0 flex-1 rounded-lg">
                 <h2 className="truncate text-lg font-semibold">{p.basics.name}</h2>
                 <p className="text-sm text-muted-foreground">
                   {EVENT_LABELS[p.basics.eventType]}
-                  {p.basics.subType ? ` · ${p.basics.subType}` : ""} · {formatDate(p.basics.date)} · {p.basics.city} ·{" "}
-                  {formatINR(p.prefs.budget)}
+                  {p.basics.subType ? ` · ${p.basics.subType}` : ""} · {formatDate(p.basics.date)} ·{" "}
+                  {p.basics.city} · {formatINR(p.prefs.budget)}
                 </p>
               </Link>
               <Button

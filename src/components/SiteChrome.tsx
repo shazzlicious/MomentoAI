@@ -8,7 +8,9 @@ function ThemeToggle() {
   const [dark, setDark] = useState(false);
   useEffect(() => {
     const stored = localStorage.getItem("momento:theme");
-    const isDark = stored ? stored === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const isDark = stored
+      ? stored === "dark"
+      : window.matchMedia("(prefers-color-scheme: dark)").matches;
     setDark(isDark);
     document.documentElement.classList.toggle("dark", isDark);
   }, []);
@@ -42,7 +44,11 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b bg-background/85 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-2">
-        <Link to="/" className="flex min-h-11 items-center gap-2 rounded-lg" aria-label="Momento home">
+        <Link
+          to="/"
+          className="flex min-h-11 items-center gap-2 rounded-lg"
+          aria-label="Momento home"
+        >
           <img src={mark} alt="" width={36} height={36} className="size-9" />
           <span className="font-display text-xl font-bold text-primary">Momento</span>
         </Link>
@@ -65,7 +71,8 @@ export function SiteFooter() {
     <footer className="mt-16 border-t">
       <div className="mx-auto flex max-w-6xl flex-col gap-1 px-4 py-6 text-sm text-muted-foreground sm:flex-row sm:justify-between">
         <p>
-          <span className="font-display font-semibold text-foreground">Momento</span> — Every moment, perfectly planned.
+          <span className="font-display font-semibold text-foreground">Momento</span> — Every
+          moment, perfectly planned.
         </p>
         <p>Your plans are stored only in this browser.</p>
       </div>

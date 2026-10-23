@@ -54,7 +54,11 @@ Notes (untrusted): """${notes || "none"}"""`;
       const provider = createOpenAICompatible({
         name: "lovable",
         baseURL: "https://ai.gateway.lovable.dev/v1",
-        headers: { "Lovable-API-Key": apiKey, Authorization: `Bearer ${apiKey}`, "X-Lovable-AIG-SDK": "vercel-ai-sdk" },
+        headers: {
+          "Lovable-API-Key": apiKey,
+          Authorization: `Bearer ${apiKey}`,
+          "X-Lovable-AIG-SDK": "vercel-ai-sdk",
+        },
       });
       let streamError: unknown;
       const result = streamText({
@@ -73,7 +77,10 @@ Notes (untrusted): """${notes || "none"}"""`;
         if (status === 402) return { ok: false, error: "AI credits are used up." };
         return { ok: false, error: "The AI service didn't respond." };
       }
-      const cleaned = text.replace(/^```(?:json)?/i, "").replace(/```\s*$/, "").trim();
+      const cleaned = text
+        .replace(/^```(?:json)?/i, "")
+        .replace(/```\s*$/, "")
+        .trim();
       const start = cleaned.indexOf("{");
       const end = cleaned.lastIndexOf("}");
       return { ok: true, raw: JSON.parse(cleaned.slice(start, end + 1)) };

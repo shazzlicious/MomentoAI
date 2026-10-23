@@ -42,8 +42,12 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">This page didn't load</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Something went wrong. Try refreshing or head back home.</p>
+        <h1 className="text-xl font-semibold tracking-tight text-foreground">
+          This page didn't load
+        </h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Something went wrong. Try refreshing or head back home.
+        </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => {
@@ -54,7 +58,10 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
           >
             Try again
           </button>
-          <a href="/" className="inline-flex min-h-11 items-center rounded-full border px-4 text-sm font-medium">
+          <a
+            href="/"
+            className="inline-flex min-h-11 items-center rounded-full border px-4 text-sm font-medium"
+          >
             Go home
           </a>
         </div>
@@ -69,7 +76,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Momento — Every moment, perfectly planned." },
-      { name: "description", content: "Momento plans weddings, birthdays, festivals, corporate and community events with budgets, timelines, vendors and AI ideas." },
+      {
+        name: "description",
+        content:
+          "Momento plans weddings, birthdays, festivals, corporate and community events with budgets, timelines, vendors and AI ideas.",
+      },
       { property: "og:site_name", content: "Momento" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

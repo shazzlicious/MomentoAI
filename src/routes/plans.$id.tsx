@@ -19,7 +19,10 @@ export const Route = createFileRoute("/plans/$id")({
       { title: "Your event plan — Momento" },
       { name: "description", content: "Budget, timeline, vendors and AI ideas for your event." },
       { property: "og:title", content: "Your event plan — Momento" },
-      { property: "og:description", content: "Budget, timeline, vendors and AI ideas for your event." },
+      {
+        property: "og:description",
+        content: "Budget, timeline, vendors and AI ideas for your event.",
+      },
       { property: "og:type", content: "article" },
       { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
@@ -76,8 +79,13 @@ function Dashboard() {
     return (
       <div className="mx-auto max-w-xl px-4 py-16 text-center">
         <h1 className="text-2xl font-bold">Plan not found</h1>
-        <p className="mt-2 text-muted-foreground">It may have been deleted or saved in another browser.</p>
-        <Link to="/plans" className="mt-6 inline-flex min-h-11 items-center rounded-full bg-primary px-5 text-primary-foreground">
+        <p className="mt-2 text-muted-foreground">
+          It may have been deleted or saved in another browser.
+        </p>
+        <Link
+          to="/plans"
+          className="mt-6 inline-flex min-h-11 items-center rounded-full bg-primary px-5 text-primary-foreground"
+        >
           Go to My Plans
         </Link>
       </div>
@@ -97,7 +105,10 @@ function Dashboard() {
       </p>
 
       <Tabs defaultValue="Overview" className="mt-8">
-        <TabsList className="h-auto w-full flex-wrap justify-start gap-1 rounded-2xl p-1.5" aria-label="Plan sections">
+        <TabsList
+          className="h-auto w-full flex-wrap justify-start gap-1 rounded-2xl p-1.5"
+          aria-label="Plan sections"
+        >
           {TABS.map((t) => (
             <TabsTrigger key={t} value={t} className="min-h-11 rounded-xl px-4">
               {t}

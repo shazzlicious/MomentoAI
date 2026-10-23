@@ -10,7 +10,11 @@ export const basicsSchema = z
   .object({
     eventType: z.enum(EVENT_TYPES, { errorMap: () => ({ message: "Choose an event type" }) }),
     subType: z.string().trim().max(60).optional(),
-    name: z.string().trim().min(2, "Event name needs at least 2 characters").max(80, "Keep it under 80 characters"),
+    name: z
+      .string()
+      .trim()
+      .min(2, "Event name needs at least 2 characters")
+      .max(80, "Keep it under 80 characters"),
     date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick a date"),
     city: z.string().trim().min(2, "Enter a city").max(60, "Keep it under 60 characters"),
     guests: z.coerce
@@ -87,12 +91,14 @@ export const plansSchema = z.array(planSchema);
 /** Strip HTML tags/control chars and clamp to 300 chars. */
 export function sanitizeNotes(input: string | undefined): string {
   if (!input) return "";
-  return input
-    .replace(/<[^>]*>/g, "")
-    .replace(/[<>]/g, "")
-    // eslint-disable-next-line no-control-regex
-    .replace(/[\u0000-\u001F\u007F]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 300);
+  return (
+    input
+      .replace(/<[^>]*>/g, "")
+      .replace(/[<>]/g, "")
+      // eslint-disable-next-line no-control-regex
+      .replace(/[\u0000-\u001F\u007F]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 300)
+  );
 }

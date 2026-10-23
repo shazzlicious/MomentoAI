@@ -18,7 +18,10 @@ const cell = "min-h-11 w-full rounded-lg border border-input bg-background px-2 
 export function VendorsTab({ plan, update }: { plan: Plan; update: Update }) {
   const [newCat, setNewCat] = useState("");
   const patch = (id: string, field: string, value: string | number) =>
-    update((p) => ({ ...p, vendors: p.vendors.map((v) => (v.id === id ? { ...v, [field]: value } : v)) }));
+    update((p) => ({
+      ...p,
+      vendors: p.vendors.map((v) => (v.id === id ? { ...v, [field]: value } : v)),
+    }));
   return (
     <Card title="Vendor checklist">
       <ul className="grid gap-3">
@@ -29,20 +32,45 @@ export function VendorsTab({ plan, update }: { plan: Plan; update: Update }) {
               {(["name", "contact"] as const).map((f) => (
                 <label key={f} className="text-xs text-muted-foreground">
                   {f === "name" ? "Vendor name" : "Contact"}
-                  <input className={cell} value={v[f]} maxLength={100} onChange={(e) => patch(v.id, f, e.target.value)} />
+                  <input
+                    className={cell}
+                    value={v[f]}
+                    maxLength={100}
+                    onChange={(e) => patch(v.id, f, e.target.value)}
+                  />
                 </label>
               ))}
               <label className="text-xs text-muted-foreground">
                 Quoted price (₹)
-                <input className={cell} type="number" min={0} value={v.price || ""} onChange={(e) => patch(v.id, "price", Math.max(0, Number(e.target.value) || 0))} />
+                <input
+                  className={cell}
+                  type="number"
+                  min={0}
+                  value={v.price || ""}
+                  onChange={(e) => patch(v.id, "price", Math.max(0, Number(e.target.value) || 0))}
+                />
               </label>
               <label className="text-xs text-muted-foreground sm:col-span-2">
                 Status
-                <select className={cell} value={v.status} onChange={(e) => patch(v.id, "status", e.target.value as VendorStatus)}>
-                  {VENDOR_STATUSES.map((s) => <option key={s}>{s}</option>)}
+                <select
+                  className={cell}
+                  value={v.status}
+                  onChange={(e) => patch(v.id, "status", e.target.value as VendorStatus)}
+                >
+                  {VENDOR_STATUSES.map((s) => (
+                    <option key={s}>{s}</option>
+                  ))}
                 </select>
               </label>
-              <Button variant="ghost" size="icon" className="size-11 text-destructive" aria-label={`Remove ${v.category} vendor`} onClick={() => update((p) => ({ ...p, vendors: p.vendors.filter((x) => x.id !== v.id) }))}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-11 text-destructive"
+                aria-label={`Remove ${v.category} vendor`}
+                onClick={() =>
+                  update((p) => ({ ...p, vendors: p.vendors.filter((x) => x.id !== v.id) }))
+                }
+              >
                 <Trash2 aria-hidden />
               </Button>
             </fieldset>
@@ -55,15 +83,28 @@ export function VendorsTab({ plan, update }: { plan: Plan; update: Update }) {
           e.preventDefault();
           const c = newCat.trim().slice(0, 60);
           if (!c) return;
-          update((p) => ({ ...p, vendors: [...p.vendors, { id: makeId(), category: c, name: "", contact: "", price: 0, status: "To contact" }] }));
+          update((p) => ({
+            ...p,
+            vendors: [
+              ...p.vendors,
+              { id: makeId(), category: c, name: "", contact: "", price: 0, status: "To contact" },
+            ],
+          }));
           setNewCat("");
         }}
       >
         <label className="flex-1 text-sm font-medium">
           Add vendor category
-          <input className={cell} value={newCat} onChange={(e) => setNewCat(e.target.value)} placeholder="e.g. Mehendi artist" />
+          <input
+            className={cell}
+            value={newCat}
+            onChange={(e) => setNewCat(e.target.value)}
+            placeholder="e.g. Mehendi artist"
+          />
         </label>
-        <Button type="submit" className="min-h-11 rounded-full"><Plus aria-hidden /> Add vendor</Button>
+        <Button type="submit" className="min-h-11 rounded-full">
+          <Plus aria-hidden /> Add vendor
+        </Button>
       </form>
     </Card>
   );
@@ -98,7 +139,10 @@ export function IdeasTab({ plan, update }: { plan: Plan; update: Update }) {
         const parsed = ideasSchema.safeParse(res.raw);
         if (parsed.success) ideas = parsed.data;
       }
-      if (!ideas) toast.info(`${res.ok ? "The AI reply was incomplete." : res.error} Showing curated ideas instead.`);
+      if (!ideas)
+        toast.info(
+          `${res.ok ? "The AI reply was incomplete." : res.error} Showing curated ideas instead.`,
+        );
     } catch {
       toast.info("Couldn't reach the AI right now. Showing curated ideas instead.");
     }
@@ -120,13 +164,27 @@ export function IdeasTab({ plan, update }: { plan: Plan; update: Update }) {
   }, []);
 
   const toggleSave = (item: string) =>
-    update((p) => ({ ...p, savedIdeas: p.savedIdeas.includes(item) ? p.savedIdeas.filter((x) => x !== item) : [...p.savedIdeas, item] }));
+    update((p) => ({
+      ...p,
+      savedIdeas: p.savedIdeas.includes(item)
+        ? p.savedIdeas.filter((x) => x !== item)
+        : [...p.savedIdeas, item],
+    }));
 
   const StarBtn = ({ item }: { item: string }) => {
     const saved = plan.savedIdeas.includes(item);
     return (
-      <button type="button" onClick={() => toggleSave(item)} aria-pressed={saved} aria-label={saved ? "Unsave idea" : "Save idea"} className="inline-flex size-11 shrink-0 items-center justify-center rounded-full hover:bg-muted">
-        <Star className={saved ? "fill-accent text-accent-foreground" : "text-muted-foreground"} aria-hidden />
+      <button
+        type="button"
+        onClick={() => toggleSave(item)}
+        aria-pressed={saved}
+        aria-label={saved ? "Unsave idea" : "Save idea"}
+        className="inline-flex size-11 shrink-0 items-center justify-center rounded-full hover:bg-muted"
+      >
+        <Star
+          className={saved ? "fill-accent text-accent-foreground" : "text-muted-foreground"}
+          aria-hidden
+        />
       </button>
     );
   };
@@ -135,16 +193,27 @@ export function IdeasTab({ plan, update }: { plan: Plan; update: Update }) {
     <div className="grid gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">
-          {plan.ideasSource === "offline" ? "Curated offline ideas." : "AI-generated, please verify details before booking."}
+          {plan.ideasSource === "offline"
+            ? "Curated offline ideas."
+            : "AI-generated, please verify details before booking."}
         </p>
-        <Button onClick={run} disabled={loading} variant="outline" className="min-h-11 rounded-full">
+        <Button
+          onClick={run}
+          disabled={loading}
+          variant="outline"
+          className="min-h-11 rounded-full"
+        >
           <RefreshCw className={loading ? "animate-spin" : ""} aria-hidden /> Regenerate
         </Button>
       </div>
-      <p className="sr-only" aria-live="polite">{status}</p>
+      <p className="sr-only" aria-live="polite">
+        {status}
+      </p>
       {loading || !plan.ideas ? (
         <div className="grid gap-4 md:grid-cols-3" aria-busy="true">
-          {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-40 rounded-2xl" />)}
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-40 rounded-2xl" />
+          ))}
         </div>
       ) : (
         <>
@@ -177,7 +246,11 @@ export function IdeasTab({ plan, update }: { plan: Plan; update: Update }) {
           </div>
           {plan.savedIdeas.length > 0 && (
             <Card title="Saved ideas">
-              <ul className="list-disc pl-5 text-sm">{plan.savedIdeas.map((s) => <li key={s}>{s}</li>)}</ul>
+              <ul className="list-disc pl-5 text-sm">
+                {plan.savedIdeas.map((s) => (
+                  <li key={s}>{s}</li>
+                ))}
+              </ul>
             </Card>
           )}
         </>
@@ -194,24 +267,43 @@ export function planToText(plan: Plan, budget: BudgetResult, timeline: TimelineR
     `Budget: ${formatINR(plan.prefs.budget)} · ${plan.prefs.style} · ${plan.prefs.diet} · ${plan.prefs.venueType}`,
     "",
     "BUDGET",
-    ...budget.allocations.map((a) => `- ${a.category}: ${formatINR(a.amount)} (spent ${formatINR(plan.actuals[a.category] ?? 0)})`),
+    ...budget.allocations.map(
+      (a) =>
+        `- ${a.category}: ${formatINR(a.amount)} (spent ${formatINR(plan.actuals[a.category] ?? 0)})`,
+    ),
     "",
     `TIMELINE${timeline.rush ? " (Rush plan)" : ""}`,
-    ...timeline.milestones.map((m) => `[${plan.doneTasks.includes(m.id) ? "x" : " "}] ${formatDate(m.dueDate)} — ${m.title}`),
+    ...timeline.milestones.map(
+      (m) => `[${plan.doneTasks.includes(m.id) ? "x" : " "}] ${formatDate(m.dueDate)} — ${m.title}`,
+    ),
     "",
     "VENDORS",
-    ...plan.vendors.map((v) => `- ${v.category}: ${v.name || "TBD"} ${v.contact ? `(${v.contact})` : ""} · ${v.price ? formatINR(v.price) : "no quote"} · ${v.status}`),
+    ...plan.vendors.map(
+      (v) =>
+        `- ${v.category}: ${v.name || "TBD"} ${v.contact ? `(${v.contact})` : ""} · ${v.price ? formatINR(v.price) : "no quote"} · ${v.status}`,
+    ),
   ];
-  if (plan.savedIdeas.length) lines.push("", "SAVED IDEAS", ...plan.savedIdeas.map((s) => `- ${s}`));
+  if (plan.savedIdeas.length)
+    lines.push("", "SAVED IDEAS", ...plan.savedIdeas.map((s) => `- ${s}`));
   return lines.join("\n");
 }
 
-export function ExportTab({ plan, budget, timeline }: { plan: Plan; budget: BudgetResult; timeline: TimelineResult }) {
+export function ExportTab({
+  plan,
+  budget,
+  timeline,
+}: {
+  plan: Plan;
+  budget: BudgetResult;
+  timeline: TimelineResult;
+}) {
   const text = planToText(plan, budget, timeline);
   return (
     <Card title="Export">
       <div className="no-print flex flex-wrap gap-3">
-        <Button onClick={() => window.print()} className="min-h-11 rounded-full"><Printer aria-hidden /> Print / Save as PDF</Button>
+        <Button onClick={() => window.print()} className="min-h-11 rounded-full">
+          <Printer aria-hidden /> Print / Save as PDF
+        </Button>
         <Button
           variant="outline"
           className="min-h-11 rounded-full"
@@ -227,7 +319,9 @@ export function ExportTab({ plan, budget, timeline }: { plan: Plan; budget: Budg
           <Copy aria-hidden /> Copy plan as text
         </Button>
       </div>
-      <pre className="mt-4 max-h-96 overflow-auto whitespace-pre-wrap rounded-xl bg-muted p-4 text-sm">{text}</pre>
+      <pre className="mt-4 max-h-96 overflow-auto whitespace-pre-wrap rounded-xl bg-muted p-4 text-sm">
+        {text}
+      </pre>
     </Card>
   );
 }
