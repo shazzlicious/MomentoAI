@@ -1,127 +1,134 @@
-import { describe, expect, it } from "vitest";
-import {
-  BUDGET_TEMPLATES,
-  CATERING_PER_GUEST_MIN,
-  adjustedWeights,
-  allocateBudget,
-  type BudgetInput,
-} from "@/lib/budgetEngine";
-import type { EventType } from "@/types/plan";
+import type { EventType, Style, VenueType } from "@/types/plan";
 
-const TYPES = Object.keys(BUDGET_TEMPLATES) as EventType[];
+export type Template = { category: string; pct: number }[];
 
-const base = (over: Partial<BudgetInput> = {}): BudgetInput => ({
-  eventType: "wedding",
-  budget: 1_500_000,
-  guests: 250,
-  style: "Traditional",
-  venueType: "Indoor",
-  ...over,
-});
+export const BUDGET_TEMPLATES: Record<EventType, Template> = {
+  wedding: [
+    { category: "Venue", pct: 20 },
+    { category: "Catering", pct: 35 },
+    { category: "Decor", pct: 12 },
+    { category: "Photo/Video", pct: 10 },
+    { category: "Attire/Makeup", pct: 8 },
+    { category: "Music", pct: 4 },
+    { category: "Invitations", pct: 2 },
+    { category: "Transport", pct: 4 },
+    { category: "Contingency", pct: 5 },
+  ],
+  birthday: [
+    { category: "Venue", pct: 20 },
+    { category: "Catering", pct: 35 },
+    { category: "Decor", pct: 15 },
+    { category: "Entertainment", pct: 12 },
+    { category: "Cake", pct: 6 },
+    { category: "Return gifts", pct: 6 },
+    { category: "Photo", pct: 3 },
+    { category: "Contingency", pct: 3 },
+  ],
+  community: [
+    { category: "Venue", pct: 15 },
+    { category: "Catering", pct: 25 },
+    { category: "Decor/Stage", pct: 12 },
+    { category: "Sound/AV", pct: 15 },
+    { category: "Marketing", pct: 10 },
+    { category: "Volunteers/Logistics", pct: 10 },
+    { category: "Permits/Safety", pct: 5 },
+    { category: "Contingency", pct: 8 },
+  ],
+  corporate: [
+    { category: "Venue", pct: 18 },
+    { category: "Catering", pct: 30 },
+    { category: "Decor/Branding", pct: 8 },
+    { category: "Sound/AV", pct: 12 },
+    { category: "Entertainment/Activities", pct: 10 },
+    { category: "Gifts/Swag", pct: 8 },
+    { category: "Photo/Video", pct: 4 },
+    { category: "Transport", pct: 5 },
+    { category: "Contingency", pct: 5 },
+  ],
+  festival: [
+    { category: "Venue/Space", pct: 10 },
+    { category: "Catering", pct: 32 },
+    { category: "Decor/Lighting", pct: 20 },
+    { category: "Cultural programs/Entertainment", pct: 10 },
+    { category: "Gifts/Sweet hampers", pct: 10 },
+    { category: "Attire", pct: 5 },
+    { category: "Photo", pct: 3 },
+    { category: "Logistics", pct: 5 },
+    { category: "Contingency", pct: 5 },
+  ],
+};
 
-const pct = (input: Omit<BudgetInput, "budget">, category: string) =>
-  adjustedWeights(input).find((w) => w.category === category)!.pct;
+export const CATERING_PER_GUEST_MIN: Record<EventType, number> = {
+  wedding: 300,
+  birthday: 300,
+  corporate: 300,
+  community: 150,
+  festival: 250,
+};
 
-describe("budget templates", () => {
-  it.each(TYPES)("%s template sums to 100%%", (t) => {
-    const sum = BUDGET_TEMPLATES[t].reduce((s, r) => s + r.pct, 0);
-    expect(sum).toBe(100);
-  });
-});
+export interface BudgetInput {
+  eventType: EventType;
+  budget: number;
+  guests: number;
+  style: Style;
+  venueType: VenueType;
+}
 
-describe("allocateBudget: totals", () => {
-  it.each(TYPES)("%s allocations sum exactly to the total", (eventType) => {
-    for (const budget of [1000, 99_999, 1_234_567, 15_00_000, 98_765_431]) {
-      const r = allocateBudget(base({ eventType, budget }));
-      expect(r.allocations.reduce((s, a) => s + a.amount, 0)).toBe(budget);
-    }
-  });
+export interface Allocation {
+  category: string;
+  pct: number;
+  amount: number;
+}
 
-  it("stays exact with style and venue adjustments applied", () => {
-    const r = allocateBudget(
-      base({ style: "Luxury", venueType: "Outdoor", guests: 500, budget: 7_777_777 }),
-    );
-    expect(r.allocations.reduce((s, a) => s + a.amount, 0)).toBe(7_777_777);
-  });
+export interface BudgetResult {
+  allocations: Allocation[];
+  perGuest: number;
+  cateringPerGuest: number;
+  warning?: string;
+}
 
-  it("rounds a fractional budget to a whole rupee total", () => {
-    const r = allocateBudget(base({ budget: 100_000.6 }));
-    expect(r.allocations.reduce((s, a) => s + a.amount, 0)).toBe(100_001);
-  });
+const isDecor = (c: string) => c.startsWith("Decor");
+const isVenue = (c: string) => c.startsWith("Venue");
 
-  it("never produces a negative amount", () => {
-    const r = allocateBudget(base({ budget: 1000 }));
-    expect(r.allocations.every((a) => a.amount >= 0)).toBe(true);
-  });
+/** Returns adjusted percentage weights (always summing to 100). */
+export function adjustedWeights(input: Omit<BudgetInput, "budget">): Allocation[] {
+  const rows = BUDGET_TEMPLATES[input.eventType].map((r) => ({ ...r }));
+  const bump = (pred: (c: string) => boolean, delta: number) => {
+    const r = rows.find((x) => pred(x.category));
+    if (r) r.pct = Math.max(0, r.pct + delta);
+  };
+  if (input.style === "Luxury") {
+    bump(isDecor, 5);
+    bump(isVenue, 3);
+  }
+  if (input.style === "Minimal") bump(isDecor, -4);
+  if (input.venueType === "Outdoor") bump((c) => c === "Contingency", 3);
+  if (input.guests > 300) bump((c) => c === "Catering", 5);
 
-  it("computes per-guest cost", () => {
-    const r = allocateBudget(base({ budget: 1_000_000, guests: 250 }));
-    expect(r.perGuest).toBe(4000);
-  });
+  const sum = rows.reduce((s, r) => s + r.pct, 0);
+  return rows.map((r) => ({ category: r.category, pct: (r.pct / sum) * 100, amount: 0 }));
+}
 
-  it("treats 0 guests as 1 to avoid division by zero", () => {
-    const r = allocateBudget(base({ guests: 0, budget: 50_000 }));
-    expect(Number.isFinite(r.perGuest)).toBe(true);
-    expect(r.perGuest).toBe(50_000);
-  });
-});
-
-describe("adjustedWeights: style and context", () => {
-  it.each(TYPES)("%s weights always sum to 100", (eventType) => {
-    for (const style of ["Traditional", "Luxury", "Minimal"] as const) {
-      const w = adjustedWeights({ eventType, guests: 400, style, venueType: "Outdoor" });
-      expect(w.reduce((s, r) => s + r.pct, 0)).toBeCloseTo(100, 8);
-    }
-  });
-
-  it("Luxury raises decor and venue share", () => {
-    const luxury = { eventType: "wedding", guests: 100, style: "Luxury", venueType: "Indoor" } as const;
-    const normal = { ...luxury, style: "Traditional" } as const;
-    expect(pct(luxury, "Decor")).toBeGreaterThan(pct(normal, "Decor"));
-    expect(pct(luxury, "Venue")).toBeGreaterThan(pct(normal, "Venue"));
-  });
-
-  it("Minimal lowers decor share", () => {
-    const minimal = { eventType: "wedding", guests: 100, style: "Minimal", venueType: "Indoor" } as const;
-    const normal = { ...minimal, style: "Traditional" } as const;
-    expect(pct(minimal, "Decor")).toBeLessThan(pct(normal, "Decor"));
-  });
-
-  it("Outdoor raises the contingency share", () => {
-    const outdoor = { eventType: "wedding", guests: 100, style: "Traditional", venueType: "Outdoor" } as const;
-    const indoor = { ...outdoor, venueType: "Indoor" } as const;
-    expect(pct(outdoor, "Contingency")).toBeGreaterThan(pct(indoor, "Contingency"));
-  });
-
-  it("more than 300 guests raises catering, exactly 300 does not", () => {
-    const mk = (guests: number) =>
-      ({ eventType: "wedding", guests, style: "Traditional", venueType: "Indoor" }) as const;
-    expect(pct(mk(301), "Catering")).toBeGreaterThan(pct(mk(300), "Catering"));
-    expect(pct(mk(300), "Catering")).toBeCloseTo(35, 8);
-  });
-
-  it("applies decor and venue adjustments to community's Decor/Stage and Venue", () => {
-    const luxury = { eventType: "community", guests: 100, style: "Luxury", venueType: "Indoor" } as const;
-    const normal = { ...luxury, style: "Traditional" } as const;
-    expect(pct(luxury, "Decor/Stage")).toBeGreaterThan(pct(normal, "Decor/Stage"));
-  });
-});
-
-describe("feasibility warning", () => {
-  it("has no warning for a healthy wedding budget", () => {
-    expect(allocateBudget(base()).warning).toBeUndefined();
-  });
-
-  it("warns when catering per guest is below the minimum", () => {
-    const r = allocateBudget(base({ budget: 50_000, guests: 200 }));
-    expect(r.cateringPerGuest).toBeLessThan(CATERING_PER_GUEST_MIN.wedding);
-    expect(r.warning).toContain("₹300");
-  });
-
-  it("uses the lower ₹150 threshold for community events", () => {
-    const ok = allocateBudget(base({ eventType: "community", budget: 100_000, guests: 100 }));
-    expect(ok.warning).toBeUndefined();
-    const bad = allocateBudget(base({ eventType: "community", budget: 100_000, guests: 300 }));
-    expect(bad.warning).toContain("₹150");
-  });
-});
+export function allocateBudget(input: BudgetInput): BudgetResult {
+  const total = Math.round(input.budget);
+  const weights = adjustedWeights(input);
+  const allocations = weights.map((w) => ({ ...w, amount: Math.round((total * w.pct) / 100) }));
+  const diff = total - allocations.reduce((s, a) => s + a.amount, 0);
+  if (diff !== 0) {
+    const largest = allocations.reduce((a, b) => (b.amount > a.amount ? b : a));
+    largest.amount += diff;
+  }
+  const catering = allocations.find((a) => a.category === "Catering")?.amount ?? 0;
+  const guests = Math.max(1, input.guests);
+  const cateringPerGuest = catering / guests;
+  const min = CATERING_PER_GUEST_MIN[input.eventType];
+  return {
+    allocations,
+    perGuest: total / guests,
+    cateringPerGuest,
+    warning:
+      cateringPerGuest < min
+        ? `Catering works out to about ₹${Math.round(cateringPerGuest)} per guest, below the realistic minimum of ₹${min}. Consider raising the budget or trimming the guest list.`
+        : undefined,
+  };
+}

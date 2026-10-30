@@ -1,114 +1,99 @@
-import { describe, expect, it } from "vitest";
-import { daysBetween, generateTimeline } from "@/lib/timelineEngine";
 import type { EventType } from "@/types/plan";
 
-const TODAY = "2026-10-30";
-const IN_45 = "2026-12-14"; // 45 days after TODAY (rush)
-const IN_90 = "2027-01-28"; // exactly 90 days
-const IN_122 = "2027-03-01"; // comfortably > 90
+export interface Milestone {
+  id: string;
+  title: string;
+  daysBefore: number;
+  dueDate: string; // yyyy-mm-dd
+  priority: boolean;
+}
 
-const TYPES: EventType[] = ["wedding", "birthday", "community", "corporate", "festival"];
+export interface TimelineResult {
+  milestones: Milestone[];
+  rush: boolean;
+  daysUntil: number;
+}
 
-describe("daysBetween", () => {
-  it("counts whole days", () => {
-    expect(daysBetween(TODAY, IN_45)).toBe(45);
-    expect(daysBetween(TODAY, IN_90)).toBe(90);
-  });
-  it("is zero for the same day and negative for the past", () => {
-    expect(daysBetween(TODAY, TODAY)).toBe(0);
-    expect(daysBetween(IN_45, TODAY)).toBe(-45);
-  });
-});
+type Base = { id: string; title: string; daysBefore: number; priority?: boolean };
 
-describe("generateTimeline: normal plan", () => {
-  const r = generateTimeline("wedding", IN_122, TODAY);
+const COMMON: Base[] = [
+  { id: "venue", title: "Book the venue", daysBefore: 90, priority: true },
+  { id: "budget", title: "Finalise budget and guest list", daysBefore: 80, priority: true },
+  { id: "caterer", title: "Book the caterer and fix the menu", daysBefore: 60, priority: true },
+  { id: "decor", title: "Shortlist and book decor", daysBefore: 45 },
+  { id: "invites", title: "Send invitations", daysBefore: 30, priority: true },
+  { id: "vendors-confirm", title: "Confirm all vendors and payments", daysBefore: 14 },
+  { id: "headcount", title: "Final headcount to caterer", daysBefore: 7, priority: true },
+  { id: "setup", title: "Venue setup and rehearsal", daysBefore: 1 },
+  {
+    id: "dayof",
+    title: "Day-of schedule: arrivals, program, meal, wrap-up",
+    daysBefore: 0,
+    priority: true,
+  },
+];
 
-  it("is not flagged as rush", () => {
-    expect(r.rush).toBe(false);
-    expect(r.daysUntil).toBe(122);
-  });
+const EXTRA: Partial<Record<EventType, Base[]>> = {
+  corporate: [
+    { id: "approval", title: "Get management approval", daysBefore: 85, priority: true },
+    { id: "calendar", title: "Send calendar invites", daysBefore: 35 },
+    { id: "rsvp", title: "Collect RSVPs", daysBefore: 10 },
+    { id: "av", title: "Confirm AV/IT setup", daysBefore: 3 },
+  ],
+  festival: [
+    { id: "rituals", title: "Plan rangoli, lighting or festival rituals", daysBefore: 21 },
+    { id: "shop", title: "Shop decor and sweets", daysBefore: 10 },
+    { id: "greetings", title: "Send festive greetings", daysBefore: 2 },
+  ],
+  wedding: [{ id: "attire", title: "Finalise attire and makeup trials", daysBefore: 40 }],
+  birthday: [{ id: "cake", title: "Order the cake", daysBefore: 7 }],
+  community: [
+    {
+      id: "permits",
+      title: "Apply for permits and safety clearances",
+      daysBefore: 70,
+      priority: true,
+    },
+  ],
+};
 
-  it("is ordered from earliest to latest", () => {
-    const days = r.milestones.map((m) => m.daysBefore);
-    expect(days).toEqual([...days].sort((a, b) => b - a));
-  });
+const FULL_WINDOW = 90;
 
-  it("starts at T-90 with the venue and ends on the event day", () => {
-    expect(r.milestones[0].id).toBe("venue");
-    expect(r.milestones[0].daysBefore).toBe(90);
-    const last = r.milestones[r.milestones.length - 1];
-    expect(last.daysBefore).toBe(0);
-    expect(last.dueDate).toBe(IN_122);
-  });
+function parseIso(iso: string): Date {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+function toIso(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
 
-  it("computes due dates backwards from the event date", () => {
-    const venue = r.milestones.find((m) => m.id === "venue")!;
-    expect(venue.dueDate).toBe("2026-12-01"); // 90 days before 2027-03-01
-  });
+export function daysBetween(fromIso: string, toIsoStr: string): number {
+  return Math.round((parseIso(toIsoStr).getTime() - parseIso(fromIso).getTime()) / 86_400_000);
+}
 
-  it("has unique ids and ISO due dates", () => {
-    const ids = r.milestones.map((m) => m.id);
-    expect(new Set(ids).size).toBe(ids.length);
-    r.milestones.forEach((m) => expect(m.dueDate).toMatch(/^\d{4}-\d{2}-\d{2}$/));
-  });
-
-  it("exactly 90 days away is not rush", () => {
-    expect(generateTimeline("wedding", IN_90, TODAY).rush).toBe(false);
-  });
-});
-
-describe("generateTimeline: rush plan", () => {
-  const r = generateTimeline("wedding", IN_45, TODAY);
-
-  it("is flagged as rush", () => {
-    expect(r.rush).toBe(true);
-    expect(r.daysUntil).toBe(45);
-  });
-
-  it("compresses proportionally (45/90 = half)", () => {
-    expect(r.milestones.find((m) => m.id === "venue")!.daysBefore).toBe(45);
-    expect(r.milestones.find((m) => m.id === "invites")!.daysBefore).toBe(15);
-    expect(r.milestones.find((m) => m.id === "headcount")!.daysBefore).toBe(4);
-  });
-
-  it("never schedules anything before today", () => {
-    r.milestones.forEach((m) => {
-      expect(m.daysBefore).toBeLessThanOrEqual(r.daysUntil);
-      expect(m.dueDate >= TODAY).toBe(true);
-    });
-  });
-
-  it("keeps order and priority flags", () => {
-    const days = r.milestones.map((m) => m.daysBefore);
-    expect(days).toEqual([...days].sort((a, b) => b - a));
-    expect(r.milestones.find((m) => m.id === "venue")!.priority).toBe(true);
-    expect(r.milestones.find((m) => m.id === "decor")!.priority).toBe(false);
-  });
-
-  it("handles an event tomorrow without going negative", () => {
-    const t = generateTimeline("birthday", "2026-10-31", TODAY);
-    expect(t.rush).toBe(true);
-    t.milestones.forEach((m) => {
-      expect(m.daysBefore).toBeGreaterThanOrEqual(0);
-      expect(m.daysBefore).toBeLessThanOrEqual(1);
-    });
-  });
-});
-
-describe("generateTimeline: event-type tasks", () => {
-  it("adds type-specific milestones", () => {
-    const ids = (t: EventType) => generateTimeline(t, IN_122, TODAY).milestones.map((m) => m.id);
-    expect(ids("wedding")).toContain("attire");
-    expect(ids("birthday")).toContain("cake");
-    expect(ids("community")).toContain("permits");
-    expect(ids("corporate")).toContain("approval");
-    expect(ids("festival")).toContain("rituals");
-  });
-
-  it.each(TYPES)("%s always includes the shared core milestones", (t) => {
-    const ids = generateTimeline(t, IN_122, TODAY).milestones.map((m) => m.id);
-    ["venue", "caterer", "invites", "headcount", "setup", "dayof"].forEach((id) =>
-      expect(ids).toContain(id),
-    );
-  });
-});
+export function generateTimeline(
+  eventType: EventType,
+  eventDate: string,
+  today: string,
+): TimelineResult {
+  const daysUntil = daysBetween(today, eventDate);
+  const rush = daysUntil < FULL_WINDOW;
+  const base = [...COMMON, ...(EXTRA[eventType] ?? [])];
+  const scale = rush ? Math.max(0, daysUntil) / FULL_WINDOW : 1;
+  const event = parseIso(eventDate);
+  const milestones = base
+    .map((b) => {
+      const daysBefore = Math.round(b.daysBefore * scale);
+      const due = new Date(event);
+      due.setDate(due.getDate() - daysBefore);
+      return {
+        id: b.id,
+        title: b.title,
+        daysBefore,
+        dueDate: toIso(due),
+        priority: Boolean(b.priority),
+      };
+    })
+    .sort((a, b) => b.daysBefore - a.daysBefore || a.id.localeCompare(b.id));
+  return { milestones, rush, daysUntil };
+}
