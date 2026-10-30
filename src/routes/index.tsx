@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Briefcase, Cake, Heart, Sparkle, Users } from "lucide-react";
-import logo from "@/assets/momento-logo.png.asset.json";
+import logo from "@/assets/momento-logo.png";
 import { Button } from "@/components/ui/button";
 import type { EventType } from "@/types/plan";
 
@@ -93,7 +93,7 @@ function Landing() {
             </div>
           </div>
           <img
-            src={logo.url}
+            src={logo}
             alt="Momento logo: a ribbon M in violet, rose and amber"
             width={420}
             height={420}
