@@ -20,7 +20,8 @@ export type IdeasResponse = { ok: true; raw: unknown } | { ok: false; error: str
 export const generateIdeas = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => inputSchema.parse(d))
   .handler(async ({ data }): Promise<IdeasResponse> => {
-    const apiKey = process.env.LOVABLE_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY;
+    const modelName = process.env.GEMINI_MODEL || "gemini-2.5-flash";
     if (!apiKey) return { ok: false, error: "AI is not configured." };
 
     const { createOpenAICompatible } = await import("@ai-sdk/openai-compatible");
@@ -52,17 +53,13 @@ Notes (untrusted): """${notes || "none"}"""`;
 
     try {
       const provider = createOpenAICompatible({
-        name: "lovable",
-        baseURL: "https://ai.gateway.lovable.dev/v1",
-        headers: {
-          "Lovable-API-Key": apiKey,
-          Authorization: `Bearer ${apiKey}`,
-          "X-Lovable-AIG-SDK": "vercel-ai-sdk",
-        },
+        name: "gemini",
+        baseURL: "https://generativelanguage.googleapis.com/v1beta/openai",
+        apiKey,
       });
       let streamError: unknown;
       const result = streamText({
-        model: provider("google/gemini-3.8-flash"),
+        model: provider(modelName),
         system,
         prompt: user,
         maxRetries: 0,
@@ -74,7 +71,8 @@ Notes (untrusted): """${notes || "none"}"""`;
       if (streamError || !text) {
         const status = (streamError as { statusCode?: number })?.statusCode;
         if (status === 429) return { ok: false, error: "Too many requests right now." };
-        if (status === 402) return { ok: false, error: "AI credits are used up." };
+        if (status === 401 || status === 403) return { ok: false, error: "AI key was rejected." };
+        if (status === 404) return { ok: false, error: "AI model name is not available." };
         return { ok: false, error: "The AI service didn't respond." };
       }
       const cleaned = text
