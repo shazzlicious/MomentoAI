@@ -72,13 +72,17 @@ Notes (untrusted): """${notes || "none"}"""`;
           streamError = error;
         },
       });
-      const text = await result.text;
-      if (streamError || !text) {
-        const status = (streamError as { statusCode?: number })?.statusCode;
-        if (status === 429) return { ok: false, error: "Too many requests right now." };
-        if (status === 401 || status === 403) return { ok: false, error: "AI key was rejected." };
-        if (status === 404) return { ok: false, error: "AI model name is not available." };
-        return { ok: false, error: "The AI service didn't respond." };
+           if (streamError || !text) {
+        const err = streamError as
+          | { statusCode?: number; message?: string; responseBody?: string }
+          | undefined;
+        const status = err?.statusCode;
+        const detail = `${status ?? "no status"}: ${String(err?.responseBody || err?.message || "empty reply").slice(0, 160)}`;
+        console.error("AI error", detail);
+        if (status === 429) return { ok: false, error: `Too many requests right now. (${detail})` };
+        if (status === 401 || status === 403) return { ok: false, error: `AI key was rejected. (${detail})` };
+        if (status === 404) return { ok: false, error: `AI model name is not available. (${detail})` };
+        return { ok: false, error: `The AI service didn't respond. (${detail})` };
       }
       const cleaned = text
         .replace(/^```(?:json)?/i, "")
