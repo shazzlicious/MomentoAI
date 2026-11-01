@@ -21,7 +21,12 @@ export const generateIdeas = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => inputSchema.parse(d))
   .handler(async ({ data }): Promise<IdeasResponse> => {
     const apiKey = process.env.LOVABLE_API_KEY;
-    if (!apiKey) return { ok: false, error: "AI is not configured." };
+        if (!apiKey) {
+      const seen = Object.keys(process.env).filter(
+        (k) => k.toUpperCase().includes("GEMINI") || k === "VERCEL" || k === "NITRO_PRESET",
+      );
+      return { ok: false, error: `AI is not configured. Seen: ${seen.join(", ") || "nothing"}.` };
+    }
 
     const { createOpenAICompatible } = await import("@ai-sdk/openai-compatible");
     const { streamText } = await import("ai");
