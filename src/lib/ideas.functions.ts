@@ -3,6 +3,9 @@ import { z } from "zod";
 import { DIETS, EVENT_TYPES, STYLES, VENUE_TYPES } from "@/types/plan";
 import { sanitizeNotes } from "./validation";
 
+const DEFAULT_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai";
+const DEFAULT_MODEL = "gemini-2.5-flash";
+
 const inputSchema = z.object({
   eventType: z.enum(EVENT_TYPES),
   subType: z.string().max(60).optional(),
@@ -20,9 +23,16 @@ export type IdeasResponse = { ok: true; raw: unknown } | { ok: false; error: str
 export const generateIdeas = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => inputSchema.parse(d))
   .handler(async ({ data }): Promise<IdeasResponse> => {
+<<<<<<< HEAD
     const apiKey = process.env.GEMINI_API_KEY;
     const modelName = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+=======
+    const apiKey = process.env.AI_API_KEY || process.env.GEMINI_API_KEY;
+>>>>>>> 2170dbddf6255ab312a15027c7a1d90ffe8ea563
     if (!apiKey) return { ok: false, error: "AI is not configured." };
+
+    const baseURL = process.env.AI_BASE_URL || DEFAULT_BASE_URL;
+    const modelName = process.env.AI_MODEL || process.env.GEMINI_MODEL || DEFAULT_MODEL;
 
     const { createOpenAICompatible } = await import("@ai-sdk/openai-compatible");
     const { streamText } = await import("ai");
@@ -53,8 +63,13 @@ Notes (untrusted): """${notes || "none"}"""`;
 
     try {
       const provider = createOpenAICompatible({
+<<<<<<< HEAD
         name: "gemini",
         baseURL: "https://generativelanguage.googleapis.com/v1beta/openai",
+=======
+        name: "momento-ai",
+        baseURL,
+>>>>>>> 2170dbddf6255ab312a15027c7a1d90ffe8ea563
         apiKey,
       });
       let streamError: unknown;
@@ -67,6 +82,7 @@ Notes (untrusted): """${notes || "none"}"""`;
           streamError = error;
         },
       });
+<<<<<<< HEAD
       const text = await result.text;
       if (streamError || !text) {
         const status = (streamError as { statusCode?: number })?.statusCode;
@@ -74,6 +90,19 @@ Notes (untrusted): """${notes || "none"}"""`;
         if (status === 401 || status === 403) return { ok: false, error: "AI key was rejected." };
         if (status === 404) return { ok: false, error: "AI model name is not available." };
         return { ok: false, error: "The AI service didn't respond." };
+=======
+           if (streamError || !text) {
+        const err = streamError as
+          | { statusCode?: number; message?: string; responseBody?: string }
+          | undefined;
+        const status = err?.statusCode;
+        const detail = `${status ?? "no status"}: ${String(err?.responseBody || err?.message || "empty reply").slice(0, 160)}`;
+        console.error("AI error", detail);
+        if (status === 429) return { ok: false, error: `Too many requests right now. (${detail})` };
+        if (status === 401 || status === 403) return { ok: false, error: `AI key was rejected. (${detail})` };
+        if (status === 404) return { ok: false, error: `AI model name is not available. (${detail})` };
+        return { ok: false, error: `The AI service didn't respond. (${detail})` };
+>>>>>>> 2170dbddf6255ab312a15027c7a1d90ffe8ea563
       }
       const cleaned = text
         .replace(/^```(?:json)?/i, "")
