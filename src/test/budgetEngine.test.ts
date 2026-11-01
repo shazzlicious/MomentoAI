@@ -75,20 +75,35 @@ describe("adjustedWeights: style and context", () => {
   });
 
   it("Luxury raises decor and venue share", () => {
-    const luxury = { eventType: "wedding", guests: 100, style: "Luxury", venueType: "Indoor" } as const;
+    const luxury = {
+      eventType: "wedding",
+      guests: 100,
+      style: "Luxury",
+      venueType: "Indoor",
+    } as const;
     const normal = { ...luxury, style: "Traditional" } as const;
     expect(pct(luxury, "Decor")).toBeGreaterThan(pct(normal, "Decor"));
     expect(pct(luxury, "Venue")).toBeGreaterThan(pct(normal, "Venue"));
   });
 
   it("Minimal lowers decor share", () => {
-    const minimal = { eventType: "wedding", guests: 100, style: "Minimal", venueType: "Indoor" } as const;
+    const minimal = {
+      eventType: "wedding",
+      guests: 100,
+      style: "Minimal",
+      venueType: "Indoor",
+    } as const;
     const normal = { ...minimal, style: "Traditional" } as const;
     expect(pct(minimal, "Decor")).toBeLessThan(pct(normal, "Decor"));
   });
 
   it("Outdoor raises the contingency share", () => {
-    const outdoor = { eventType: "wedding", guests: 100, style: "Traditional", venueType: "Outdoor" } as const;
+    const outdoor = {
+      eventType: "wedding",
+      guests: 100,
+      style: "Traditional",
+      venueType: "Outdoor",
+    } as const;
     const indoor = { ...outdoor, venueType: "Indoor" } as const;
     expect(pct(outdoor, "Contingency")).toBeGreaterThan(pct(indoor, "Contingency"));
   });
@@ -101,7 +116,12 @@ describe("adjustedWeights: style and context", () => {
   });
 
   it("applies decor and venue adjustments to community's Decor/Stage and Venue", () => {
-    const luxury = { eventType: "community", guests: 100, style: "Luxury", venueType: "Indoor" } as const;
+    const luxury = {
+      eventType: "community",
+      guests: 100,
+      style: "Luxury",
+      venueType: "Indoor",
+    } as const;
     const normal = { ...luxury, style: "Traditional" } as const;
     expect(pct(luxury, "Decor/Stage")).toBeGreaterThan(pct(normal, "Decor/Stage"));
   });
