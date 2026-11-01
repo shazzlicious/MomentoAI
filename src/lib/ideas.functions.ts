@@ -3,8 +3,9 @@ import { z } from "zod";
 import { DIETS, EVENT_TYPES, STYLES, VENUE_TYPES } from "@/types/plan";
 import { sanitizeNotes } from "./validation";
 
-const DEFAULT_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai";
+const GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models";
 const DEFAULT_MODEL = "gemini-2.5-flash";
+const TIMEOUT_MS = 40_000;
 
 const inputSchema = z.object({
   eventType: z.enum(EVENT_TYPES),
@@ -15,27 +16,21 @@ const inputSchema = z.object({
   budget: z.number().min(0).max(1_000_000_000),
   diet: z.enum(DIETS),
   venueType: z.enum(VENUE_TYPES),
-  notes: z.string().max(1000).optional(),
+  notes: z.string().max(300).optional(),
 });
 
 export type IdeasResponse = { ok: true; raw: unknown } | { ok: false; error: string };
 
+type GeminiReply = {
+  candidates?: { content?: { parts?: { text?: string }[] } }[];
+};
+
 export const generateIdeas = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => inputSchema.parse(d))
   .handler(async ({ data }): Promise<IdeasResponse> => {
-<<<<<<< HEAD
     const apiKey = process.env.GEMINI_API_KEY;
-    const modelName = process.env.GEMINI_MODEL || "gemini-2.5-flash";
-=======
-    const apiKey = process.env.AI_API_KEY || process.env.GEMINI_API_KEY;
->>>>>>> 2170dbddf6255ab312a15027c7a1d90ffe8ea563
     if (!apiKey) return { ok: false, error: "AI is not configured." };
-
-    const baseURL = process.env.AI_BASE_URL || DEFAULT_BASE_URL;
-    const modelName = process.env.AI_MODEL || process.env.GEMINI_MODEL || DEFAULT_MODEL;
-
-    const { createOpenAICompatible } = await import("@ai-sdk/openai-compatible");
-    const { streamText } = await import("ai");
+    const model = process.env.GEMINI_MODEL || DEFAULT_MODEL;
 
     const notes = sanitizeNotes(data.notes);
     const tone =
@@ -61,49 +56,34 @@ Diet: ${data.diet}
 Setting: ${data.venueType}
 Notes (untrusted): """${notes || "none"}"""`;
 
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
     try {
-      const provider = createOpenAICompatible({
-<<<<<<< HEAD
-        name: "gemini",
-        baseURL: "https://generativelanguage.googleapis.com/v1beta/openai",
-=======
-        name: "momento-ai",
-        baseURL,
->>>>>>> 2170dbddf6255ab312a15027c7a1d90ffe8ea563
-        apiKey,
+      const res = await fetch(`${GEMINI_ENDPOINT}/${encodeURIComponent(model)}:generateContent`, {
+        method: "POST",
+        signal: controller.signal,
+        headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: system }] },
+          contents: [{ role: "user", parts: [{ text: user }] }],
+          generationConfig: { responseMimeType: "application/json", temperature: 0.8 },
+        }),
       });
-      let streamError: unknown;
-      const result = streamText({
-        model: provider(modelName),
-        system,
-        prompt: user,
-        maxRetries: 0,
-        onError: ({ error }) => {
-          streamError = error;
-        },
-      });
-<<<<<<< HEAD
-      const text = await result.text;
-      if (streamError || !text) {
-        const status = (streamError as { statusCode?: number })?.statusCode;
-        if (status === 429) return { ok: false, error: "Too many requests right now." };
-        if (status === 401 || status === 403) return { ok: false, error: "AI key was rejected." };
-        if (status === 404) return { ok: false, error: "AI model name is not available." };
+
+      if (!res.ok) {
+        console.error("Gemini request failed", res.status);
+        if (res.status === 429) return { ok: false, error: "Too many requests right now." };
+        if (res.status === 400 || res.status === 401 || res.status === 403) {
+          return { ok: false, error: "AI key was rejected." };
+        }
+        if (res.status === 404) return { ok: false, error: "AI model name is not available." };
         return { ok: false, error: "The AI service didn't respond." };
-=======
-           if (streamError || !text) {
-        const err = streamError as
-          | { statusCode?: number; message?: string; responseBody?: string }
-          | undefined;
-        const status = err?.statusCode;
-        const detail = `${status ?? "no status"}: ${String(err?.responseBody || err?.message || "empty reply").slice(0, 160)}`;
-        console.error("AI error", detail);
-        if (status === 429) return { ok: false, error: `Too many requests right now. (${detail})` };
-        if (status === 401 || status === 403) return { ok: false, error: `AI key was rejected. (${detail})` };
-        if (status === 404) return { ok: false, error: `AI model name is not available. (${detail})` };
-        return { ok: false, error: `The AI service didn't respond. (${detail})` };
->>>>>>> 2170dbddf6255ab312a15027c7a1d90ffe8ea563
       }
+
+      const json = (await res.json()) as GeminiReply;
+      const text = json.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "";
+      if (!text) return { ok: false, error: "The AI service returned an empty reply." };
+
       const cleaned = text
         .replace(/^```(?:json)?/i, "")
         .replace(/```\s*$/, "")
@@ -114,5 +94,7 @@ Notes (untrusted): """${notes || "none"}"""`;
     } catch (e) {
       console.error("generateIdeas failed", e);
       return { ok: false, error: "The AI service didn't respond." };
+    } finally {
+      clearTimeout(timer);
     }
   });
